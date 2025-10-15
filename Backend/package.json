@@ -1,0 +1,42 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend for selfship",
+  "main": "server.js",
+  "scripts": {
+    "test": "node test.js",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anujraj1904/SelfShip.git"
+  },
+  "keywords": [
+    "[\"backend\"",
+    "\"nodejs\"",
+    "\"express\"",
+    "\"REST",
+    "API\"",
+    "\"mongodb\"",
+    "\"selfship\"",
+    "\"server\"",
+    "\"authentication\"",
+    "\"routing\"",
+    "\"startup\"",
+    "\"fullstack\"]"
+  ],
+  "author": "\"Anuj Raj <akgupta.anuj@gmail.com> (https://github.com/Anujraj1904)",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/Anujraj1904/SelfShip/issues"
+  },
+  "homepage": "https://github.com/Anujraj1904/SelfShip#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
