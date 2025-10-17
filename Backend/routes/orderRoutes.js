@@ -3,7 +3,7 @@ const { createOrder, getOrders } = require('../controllers/orderController');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
 
-router.post('/', protect, createOrder);
-router.get('/', protect, getOrders);
+router.post('/createOrder', protect, createOrder);
+router.get('/getOrder', protect, getOrders);
 
 module.exports = router;

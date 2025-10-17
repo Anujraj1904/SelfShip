@@ -1,7 +1,11 @@
 const Order = require('../models/Order');
 
+
 exports.createOrder = async (req, res, next) => {
   try {
+    if (!req.user) { // Authorization check
+      return res.status(401).json({ message: 'Not authorized' });
+    }
     const { pickupLocation, deliveryLocation, cargoType, weight, price } = req.body;
     const order = await Order.create({
       shipperId: req.user.id,
@@ -19,7 +23,7 @@ exports.createOrder = async (req, res, next) => {
 
 exports.getOrders = async (req, res, next) => {
   try {
-    const orders = await Order.findAll();
+    const orders = await Order.find();  // correct Mongoose method
     res.json({ success: true, orders });
   } catch (err) {
     next(err);

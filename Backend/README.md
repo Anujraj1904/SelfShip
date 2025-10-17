@@ -33,7 +33,7 @@ Run (development)
   node server.js
 - Default server URL: http://localhost:5000/
 - Root test route:
-  curl http://localhost:4000/
+  curl http://localhost:5000/
   Response:
   {
     "message": "Hello from Express app.js!" // example
@@ -45,18 +45,18 @@ Database
 
 API Endpoints (summary)
 - Auth
-  - POST /api/auth/register
+  - POST http://localhost:5000/api/auth/register
     Payload: { "username", "email", "password", "role?" }
     Returns: { success, token, user }
-  - POST /api/auth/login
+  - POST http://localhost:5000/api/auth/login
     Payload: { "email", "password" }
     Returns: { success, token, user }
 
 - Orders (protected)
-  - POST /api/orders
+  - POST http://localhost:5000/api/orders/createOrder
     Payload: { pickupLocation, deliveryLocation, cargoType, weight, price }
     Returns: created order
-  - GET /api/orders
+  - GET http://localhost:5000/api/orders/getOrder
     Returns: list of orders
 
 - Match (protected)

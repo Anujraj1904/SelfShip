@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  shipperId: { type: Number },             // Integer field equivalent
+  shipperId: { type: String },             // Integer field equivalent
   pickupLocation: { type: String },
   deliveryLocation: { type: String },
   cargoType: { type: String },
