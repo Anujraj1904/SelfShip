@@ -60,12 +60,12 @@ API Endpoints (summary)
     Returns: list of orders
 
 - Match (protected)
-  - POST /api/match
+  - POST http://localhost:5000/api/match/driverMatch
     Payload: { orderId }
     Returns: matches (drivers)
 
 - Payments (protected)
-  - POST /api/payments
+  - POST http://localhost:5000/api/payments/
     Payload: { orderId, amount }
     Returns: clientSecret and payment record
 
