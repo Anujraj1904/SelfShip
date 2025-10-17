@@ -18,10 +18,10 @@ Quick file references
 
 Environment variables
 Create a `.env` file in the project root with at minimum:
-- MONGO_URI=mongodb://localhost:27017/selfship
-- JWT_SECRET=your_jwt_secret
+- MONGO_URI=
+- JWT_SECRET=
 - PORT=4000
-- STRIPE_SECRET_KEY=sk_test_...
+- STRIPE_SECRET_KEY=
 
 Installation
 1. Clone repo
@@ -31,7 +31,7 @@ Installation
 Run (development)
 - Start server:
   node server.js
-- Default server URL: http://localhost:4000/
+- Default server URL: http://localhost:5000/
 - Root test route:
   curl http://localhost:4000/
   Response:
