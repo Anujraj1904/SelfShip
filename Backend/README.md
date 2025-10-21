@@ -1,4 +1,5 @@
 # SelfShip Backend
+# Backend API Documentation
 
 Overview
 - SelfShip Backend is a Node.js + Express REST API that manages shippers, drivers, orders, matches and payments.
@@ -10,18 +11,19 @@ Quick file references
 - app.js — Express app, routes, middleware, example root route.
 - server.js — starts HTTP server and calls DB connect.
 - config/db.js — MongoDB connection helper.
-- services/* — business integrations (aiMatch, payments).
-- models/* — Mongoose models (User.js, order.js, Payment.js, Driver.js).
-- controllers/* — request handlers for auth, orders, payments, matching.
+- services/* — business integrations (caption, map, ride, user, payments).
+- models/* — Mongoose models (User.js, ride.js, Payment.js, captain.js, blacklistToken.js).
+- controllers/* — request handlers for user, rides, payments, map, captain.
 - routes/* — route definitions.
 - middleware/* — error and auth middleware.
 
 Environment variables
 Create a `.env` file in the project root with at minimum:
-- MONGO_URI=
-- JWT_SECRET=
+- MONGO_URI
+- JWT_SECRET
 - PORT=4000
-- STRIPE_SECRET_KEY=
+- STRIPE_SECRET_KEY
+- GOOGLE_MAPS_API
 
 Installation
 1. Clone repo
@@ -36,188 +38,490 @@ Run (development)
   curl http://localhost:5000/
   Response:
   {
-    "message": "Hello from Express app.js!" // example
+    "message": "Hello Welcome to Roatify!" // example
   }
 
 Database
 - config/db.js connects mongoose to MONGO_URI.
 - Ensure MongoDB is running locally or provide a cloud Mongo URI.
 
-API Endpoints (summary)
-- Auth
-  - POST http://localhost:5000/api/auth/register
-    Payload: { "username", "email", "password", "role?" }
-    Returns: { success, token, user }
-  - POST http://localhost:5000/api/auth/login
-    Payload: { "email", "password" }
-    Returns: { success, token, user }
+## `/users/register` Endpoint
 
-- Orders (protected)
-  - POST http://localhost:5000/api/orders/createOrder
-    Payload: { pickupLocation, deliveryLocation, cargoType, weight, price }
-    Returns: created order
-  - GET http://localhost:5000/api/orders/getOrder
-    Returns: list of orders
+### Description
 
-- Match (protected)
-  - POST http://localhost:5000/api/match/driverMatch
-    Payload: { orderId }
-    Returns: matches (drivers)
+Registers a new user by creating a user account with the provided information.
 
-- Payments (protected)
-  - POST http://localhost:5000/api/payments/
-    Payload: { orderId, amount }
-    Returns: clientSecret and payment record
+### HTTP Method
 
-Notes on authentication
-- API uses JWT. Send header:
-  Authorization: Bearer <token>
-- The User model issues JWT via user.generateJWT().
+`POST`
 
-Models — quick reference
-- models/User.js
-  - Fields: username (String, unique), email (String, unique), password (String, select:false), role (String, default 'user')
-  - Hooks: pre-save password hashing with bcrypt
-  - Methods: comparePassword(enteredPassword), generateJWT()
-  - Usage: for login, query with .select('+password') to compare.
+### Request Body
 
-- models/order.js
-  - Fields: shipperId, pickupLocation, deliveryLocation, cargoType, weight, price, status
-  - Timestamps added (createdAt, updatedAt)
+The request body should be in JSON format and include the following fields:
 
-- models/Payment.js
-  - Fields: orderId, amount, method, status, stripeIntentId
-  - Timestamps added
+- `fullname` (object):
+  - `firstname` (string, required): User's first name (minimum 3 characters).
+  - `lastname` (string, optional): User's last name (minimum 3 characters).
+- `email` (string, required): User's email address (must be a valid email).
+- `password` (string, required): User's password (minimum 6 characters).
 
-- models/Driver.js
-  - Fields: userId, vehicleType, capacity, cargoTypes (string list expected), available (Boolean), location
+### Example Response
 
-Development recommendations
-- Remove confirmPassword field from persisted user records; validate match on incoming payload and do not save it.
-- When using password-protected operations, always query for +password.
-- Normalize user IDs across models (ObjectId) instead of Number for consistency.
+- `user` (object):
+  - `fullname` (object).
+    - `firstname` (string): User's first name (minimum 3 characters).
+    - `lastname` (string): User's last name (minimum 3 characters).   
+  - `email` (string): User's email address (must be a valid email).
+  - `password` (string): User's password (minimum 6 characters).
+- `token` (String): JWT Token
 
-Testing
-- Tests can be written with Jest + Supertest for route-level testing.
-- Example package.json script:
-  "scripts": {
-    "test": "jest --runInBand"
+## `/users/login` Endpoint
+
+### Description
+
+Authenticates a user using their email and password, returning a JWT token upon successful login.
+
+### HTTP Method
+
+`POST`
+
+### Endpoint
+
+`/users/login`
+
+### Request Body
+
+The request body should be in JSON format and include the following fields:
+
+- `email` (string, required): User's email address (must be a valid email).
+- `password` (string, required): User's password (minimum 6 characters).
+
+### Example Response
+
+- `user` (object):
+  - `fullname` (object).
+    - `firstname` (string): User's first name (minimum 3 characters).
+    - `lastname` (string): User's last name (minimum 3 characters).   
+  - `email` (string): User's email address (must be a valid email).
+  - `password` (string): User's password (minimum 6 characters).
+- `token` (String): JWT Token
+
+## `/users/profile` Endpoint
+
+### Description
+
+Retrieves the profile information of the currently authenticated user.
+
+### HTTP Method
+
+`GET`
+
+### Authentication
+
+Requires a valid JWT token in the Authorization header:
+`Authorization: Bearer <token>`
+
+### Example Response
+
+- `user` (object):
+  - `fullname` (object).
+    - `firstname` (string): User's first name (minimum 3 characters).
+    - `lastname` (string): User's last name (minimum 3 characters).   
+  - `email` (string): User's email address (must be a valid email).
+
+
+
+## `/users/logout` Endpoint
+
+### Description
+
+Logout the current user and blacklist the token provided in cookie or headers
+
+### HTTP Method
+
+`GET`
+
+### Authentication
+
+Requires a valid JWT token in the Authorization header or cookie:
+
+- `user` (object):
+  - `fullname` (object).
+    - `firstname` (string): User's first name (minimum 3 characters).
+    - `lastname` (string): User's last name (minimum 3 characters).   
+  - `email` (string): User's email address (must be a valid email).
+  - `password` (string): User's password (minimum 6 characters).
+- `token` (String): JWT Token## `/captains/register` Endpoint
+
+### Description
+
+Registers a new captain by creating a captain account with the provided information.
+
+### HTTP Method
+
+`POST`
+
+### Request Body
+
+The request body should be in JSON format and include the following fields:
+
+- `fullname` (object):
+  - `firstname` (string, required): Captain's first name (minimum 3 characters)
+  - `lastname` (string, optional): Captain's last name
+- `email` (string, required): Captain's email address (must be a valid email)
+- `password` (string, required): Captain's password (minimum 6 characters)
+- `vehicle` (object):
+  - `color` (string, required): Vehicle color (minimum 3 characters)
+  - `plate` (string, required): Vehicle plate number (minimum 3 characters)
+  - `capacity` (number, required): Vehicle passenger capacity (minimum 1)
+  - `vehicleType` (string, required): Type of vehicle (must be 'car', 'motorcycle', or 'auto')
+
+### Example Response
+
+
+## `/captains/register` Endpoint
+
+### Description
+
+Registers a new captain by creating a captain account with the provided information.
+
+### HTTP Method
+
+`POST`
+
+### Request Body
+
+The request body should be in JSON format and include the following fields:
+
+- `fullname` (object):
+  - `firstname` (string, required): Captain's first name (minimum 3 characters).
+  - `lastname` (string, optional): Captain's last name (minimum 3 characters).
+- `email` (string, required): Captain's email address (must be a valid email).
+- `password` (string, required): Captain's password (minimum 6 characters).
+- `vehicle` (object):
+  - `color` (string, required): Vehicle color (minimum 3 characters).
+  - `plate` (string, required): Vehicle plate number (minimum 3 characters).
+  - `capacity` (number, required): Vehicle passenger capacity (minimum 1).
+  - `vehicleType` (string, required): Type of vehicle (must be 'car', 'motorcycle', or 'auto').
+
+### Example Response
+
+- `captain` (object):
+  - `fullname` (object).
+    - `firstname` (string): Captain's first name (minimum 3 characters).
+    - `lastname` (string): Captain's last name (minimum 3 characters).   
+  - `email` (string): Captain's email address (must be a valid email).
+  - `password` (string): Captain's password (minimum 6 characters).
+  - `vehicle` (object):
+    - `color` (string): Vehicle color.
+    - `plate` (string): Vehicle plate number.
+    - `capacity` (number): Vehicle passenger capacity.
+    - `vehicleType` (string): Type of vehicle.
+- `token` (String): JWT Token
+
+## `/captains/login` Endpoint
+
+### Description
+
+Authenticates a captain using their email and password, returning a JWT token upon successful login.
+
+### HTTP Method
+
+`POST`
+
+### Endpoint
+
+`/captains/login`
+
+### Request Body
+
+The request body should be in JSON format and include the following fields:
+
+- `email` (string, required): Captain's email address (must be a valid email).
+- `password` (string, required): Captain's password (minimum 6 characters).
+
+### Example Response
+
+- `captain` (object):
+  - `fullname` (object).
+    - `firstname` (string): Captain's first name (minimum 3 characters).
+    - `lastname` (string): Captain's last name (minimum 3 characters).   
+  - `email` (string): Captain's email address (must be a valid email).
+  - `password` (string): Captain's password (minimum 6 characters).
+  - `vehicle` (object):
+    - `color` (string): Vehicle color.
+    - `plate` (string): Vehicle plate number.
+    - `capacity` (number): Vehicle passenger capacity.
+    - `vehicleType` (string): Type of vehicle.
+- `token` (String): JWT Token
+
+## `/captains/profile` Endpoint
+
+### Description
+
+Retrieves the profile information of the currently authenticated captain.
+
+### HTTP Method
+
+`GET`
+
+### Authentication
+
+Requires a valid JWT token in the Authorization header:
+`Authorization: Bearer <token>`
+
+### Example Response
+
+- `captain` (object):
+  - `fullname` (object).
+    - `firstname` (string): Captain's first name (minimum 3 characters).
+    - `lastname` (string): Captain's last name (minimum 3 characters).   
+  - `email` (string): Captain's email address (must be a valid email).
+  - `vehicle` (object):
+    - `color` (string): Vehicle color.
+    - `plate` (string): Vehicle plate number.
+    - `capacity` (number): Vehicle passenger capacity.
+    - `vehicleType` (string): Type of vehicle.
+
+## `/captains/logout` Endpoint
+
+### Description
+
+Logout the current captain and blacklist the token provided in cookie or headers.
+
+### HTTP Method
+
+`GET`
+
+### Authentication
+
+Requires a valid JWT token in the Authorization header or cookie.
+
+### Example Response
+
+- `message` (string): Logout successfully.
+
+
+## `/maps/get-coordinates` Endpoint
+
+### Description
+
+Retrieves the coordinates (latitude and longitude) for a given address.
+
+### HTTP Method
+
+`GET`
+
+### Request Parameters
+
+- `address` (string, required): The address for which to retrieve coordinates.
+
+### Example Request
+
+GET `/maps/get-coordinates?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA`
+
+### Example Response
+
+```json
+{
+  "ltd": 37.4224764,
+  "lng": -122.0842499
+}
+```
+
+### Error Response
+
+- `400 Bad Request`: If the address parameter is missing or invalid.
+- `404 Not Found`: If the coordinates for the given address could not be found.
+
+```json
+{
+  "message": "Coordinates not found"
+}
+```
+
+## `/maps/get-distance-time` Endpoint
+
+### Description
+
+Retrieves the distance and estimated travel time between two locations.
+
+### HTTP Method
+
+`GET`
+
+### Request Parameters
+
+- `origin` (string, required): The starting address or location.
+- `destination` (string, required): The destination address or location.
+
+### Example Request
+
+```
+GET /maps/get-distance-time?origin=New+York,NY&destination=Los+Angeles,CA
+```
+
+### Example Response
+
+```json
+{
+  "distance": {
+    "text": "2,789 miles",
+    "value": 4486540
+  },
+  "duration": {
+    "text": "1 day 18 hours",
+    "value": 154800
   }
-
-Example Jest tests (place in tests/ and adapt imports):
-
-- tests/auth.test.js (example)
-```javascript
-// example: tests/auth.test.js
-const request = require('supertest');
-const app = require('../app');
-const mongoose = require('mongoose');
-
-beforeAll(async () => {
-  // optional: connect to test DB or mock
-});
-
-afterAll(async () => {
-  await mongoose.connection.close();
-});
-
-test('Register -> responds with token and user', async () => {
-  const res = await request(app)
-    .post('/api/auth/register')
-    .send({
-      username: 'testuser',
-      email: 'testuser@example.com',
-      password: 'password123'
-    });
-  expect(res.statusCode).toBe(201);
-  expect(res.body).toHaveProperty('token');
-  expect(res.body.user.email).toBe('testuser@example.com');
-});
+}
 ```
 
-Expected output for register test (successful)
-```
-PASS tests/auth.test.js
-  ✓ Register -> responds with token and user (xx ms)
+### Error Response
 
-Test Suites: 1 passed, 1 total
-Tests:       1 passed, 1 total
-```
+- `400 Bad Request`: If the origin or destination parameter is missing or invalid.
+- `404 Not Found`: If the distance and time for the given locations could not be found.
 
-- tests/order.test.js (example)
-```javascript
-// example: tests/order.test.js
-const request = require('supertest');
-const app = require('../app');
-
-let token;
-
-beforeAll(async () => {
-  // Option 1: create a test user and login to obtain token
-  const reg = await request(app).post('/api/auth/register').send({
-    username: 'orderuser',
-    email: 'orderuser@example.com',
-    password: 'password123'
-  });
-  token = reg.body.token;
-});
-
-test('Create order -> returns order', async () => {
-  const res = await request(app)
-    .post('/api/orders')
-    .set('Authorization', `Bearer ${token}`)
-    .send({
-      pickupLocation: 'A',
-      deliveryLocation: 'B',
-      cargoType: 'general',
-      weight: 100,
-      price: 250
-    });
-  expect(res.statusCode).toBe(200);
-  expect(res.body.order).toHaveProperty('_id');
-  expect(res.body.order.price).toBe(250);
-});
+```json
+{
+  "message": "No routes found"
+}
 ```
 
-Expected output (successful)
-```
-PASS tests/order.test.js
-  ✓ Create order -> returns order (xx ms)
-```
+## `/maps/get-suggestions` Endpoint
 
-- tests/payment.test.js (example)
-```javascript
-// example: tests/payment.test.js
-const request = require('supertest');
-const app = require('../app');
+### Description
 
-test('Create payment -> returns clientSecret and payment', async () => {
-  // assume orderId 123 exists in test DB
-  const res = await request(app)
-    .post('/api/payments')
-    .set('Authorization', `Bearer <valid-token>`)
-    .send({ orderId: 123, amount: 50 });
-  expect(res.statusCode).toBe(200);
-  expect(res.body).toHaveProperty('clientSecret');
-  expect(res.body.payment).toHaveProperty('amount', 50);
-});
+Retrieves autocomplete suggestions for a given input string.
+
+### HTTP Method
+
+`GET`
+
+### Request Parameters
+
+- `input` (string, required): The input string for which to retrieve suggestions.
+
+### Example Request
+
+```
+GET /maps/get-suggestions?input=1600+Amphitheatre
 ```
 
-Expected output (successful)
+### Example Response
+
+```json
+[
+  "1600 Amphitheatre Parkway, Mountain View, CA, USA",
+  "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
+]
 ```
-PASS tests/payment.test.js
-  ✓ Create payment -> returns clientSecret and payment (xx ms)
+
+### Error Response
+
+- `400 Bad Request`: If the input parameter is missing or invalid.
+- `500 Internal Server Error`: If there is an error retrieving suggestions.
+
+```json
+{
+  "message": "Unable to fetch suggestions"
+}
 ```
 
-Troubleshooting & common fixes
-- If server fails at db connect: verify MONGO_URI and that MongoDB is reachable.
-- If JWT generation fails: ensure JWT_SECRET is set.
-- If routes return 404: confirm correct route file names and route registration in app.js.
-- For Stripe errors: ensure STRIPE_SECRET_KEY is valid and environment accessible.
+## `/rides/create` Endpoint
 
-Appendix: app.js and server.js (what they do)
-- app.js: loads environment, express, middleware, routes, root route, and registers error handler.
-- server.js: imports app, connects DB (config/db.js), creates HTTP server, listens on PORT.
+### Description
 
-Change log
-- README extended with detailed steps, sample tests, and expected outputs.
+Creates a new ride with the provided information.
+
+### HTTP Method
+
+`POST`
+
+### Authentication
+
+Requires a valid JWT token in the Authorization header:
+`Authorization: Bearer <token>`
+
+### Request Body
+
+The request body should be in JSON format and include the following fields:
+
+- `pickup` (string, required): The pickup address (minimum 3 characters).
+- `destination` (string, required): The destination address (minimum 3 characters).
+- `vehicleType` (string, required): The type of vehicle (must be 'auto', 'car', or 'moto').
+
+### Example Response
+
+- `ride` (object):
+  - `user` (string): User ID.
+  - `pickup` (string): Pickup address.
+  - `destination` (string): Destination address.
+  - `fare` (number): Fare amount.
+  - `status` (string): Ride status.
+  - `duration` (number): Duration in seconds.
+  - `distance` (number): Distance in meters.
+  - `otp` (string): OTP for the ride.
+
+### Error Response
+
+- `400 Bad Request`: If any required field is missing or invalid.
+- `500 Internal Server Error`: If there is an error creating the ride.
+
+```json
+{
+  "message": "Error message"
+}
+```
+
+
+## `/rides/get-fare` Endpoint
+
+### Description
+
+Retrieves the fare estimate for a ride between the provided pickup and destination addresses.
+
+### HTTP Method
+
+`GET`
+
+### Authentication
+
+Requires a valid JWT token in the Authorization header:
+`Authorization:
+
+ Bear
+
+er <token>`
+
+### Request Parameters
+
+- `pickup` (string, required): The pickup address (minimum 3 characters).
+- `destination` (string, required): The destination address (minimum 3 characters).
+
+### Example Request
+
+```
+GET /rides/get-fare?pickup=1600+Amphitheatre+Parkway,+Mountain+View,+CA&destination=1+Infinite+Loop,+Cupertino,+CA
+```
+
+### Example Response
+
+```json
+{
+  "auto": 50.0,
+  "car": 75.0,
+  "moto": 40.0
+}
+```
+
+### Error Response
+
+- `400 Bad Request`: If any required parameter is missing or invalid.
+- `500 Internal Server Error`: If there is an error calculating the fare.
+
+```json
+{
+  "message": "Error message"
+}
+```
+
