@@ -1,6 +1,6 @@
 const captainModel = require('../models/captain');
-const captainServices = require('../services/captain.service');
-const blasklistTokenModel = require('../models/blacklistToken');
+const captainService = require('../services/captain.service');
+const blackListTokenModel = require('../models/blacklistToken');
 const { validationResult } = require('express-validator');
 
 module.exports.registerCaptain = async (req, res, next) => {

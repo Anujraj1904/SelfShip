@@ -45,7 +45,7 @@ Database
 - config/db.js connects mongoose to MONGO_URI.
 - Ensure MongoDB is running locally or provide a cloud Mongo URI.
 
-## `/users/register` Endpoint
+## `/api/users/register` Endpoint
 
 ### Description
 
@@ -75,7 +75,7 @@ The request body should be in JSON format and include the following fields:
   - `password` (string): User's password (minimum 6 characters).
 - `token` (String): JWT Token
 
-## `/users/login` Endpoint
+## `/api/users/login` Endpoint
 
 ### Description
 
