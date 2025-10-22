@@ -26,7 +26,6 @@ module.exports.registerCaptain = async (req, res, next) => {
     lastname: fullname.lastname,
     email,
     password: hashedPassword,
-    color: vehicle.color,
     plate: vehicle.plate,
     capacity: vehicle.capacity,
     vehicleType: vehicle.vehicleType

@@ -30,7 +30,8 @@ const userSchema = new mongoose.Schema(
     socketId: {
       type: String,
     },
-  });
+  }
+);
 
 userSchema.methods.generateAuthToken = function () {
   const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
@@ -46,3 +47,5 @@ userSchema.statics.hashPassword = async function (password) {
 }
 
 const userModel = mongoose.model('user', userSchema);
+
+module.exports = userModel;
